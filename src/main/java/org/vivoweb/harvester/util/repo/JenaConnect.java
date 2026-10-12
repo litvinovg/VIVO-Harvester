@@ -589,25 +589,26 @@ public abstract class JenaConnect {
 	 */
 	public void executeUpdateQuery(String queryString, boolean datasetMode) throws IOException {
 		log.debug("datasetMode: "+ datasetMode); 
-		if (this.jenaModel.supportsTransactions()) this.jenaModel.begin();
-		this.jenaModel.notifyEvent(GraphEvents.startRead);
-		try {
- 			log.trace("query:\n" + queryString);
-			if (datasetMode) {
+		if (datasetMode) {
+			if (this.jenaModel.supportsTransactions()) this.jenaModel.begin();
+			this.jenaModel.notifyEvent(GraphEvents.startRead);
+			try {
+	 			log.trace("query:\n" + queryString);
  				log.trace("Executing query against dataset");
 				UpdateAction.execute(UpdateFactory.create(queryString), getDataset());
-			} else {
- 				log.trace("Executing query against model");
-				UpdateAction.execute(UpdateFactory.create(queryString), getJenaModel());
+			} finally {
+				if (this.jenaModel.supportsTransactions()) this.jenaModel.commit();
+				this.jenaModel.notifyEvent(GraphEvents.finishRead);
 			}
-		} finally {
+		} else {
+			this.jenaModel.notifyEvent(GraphEvents.startRead);
+			log.trace("Executing query against model");
+			UpdateAction.parseExecute(queryString, getJenaModel());
 			this.jenaModel.notifyEvent(GraphEvents.finishRead);
-			if (this.jenaModel.supportsTransactions()) this.jenaModel.commit();
-			 
 		}
-		this.jenaModel.close();
+		
 	}
-	
+
 	/**
 	 * RDF formats
 	 */
