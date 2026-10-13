@@ -592,12 +592,21 @@ public abstract class JenaConnect {
 		if (datasetMode) {
 			if (this.jenaModel.supportsTransactions()) this.jenaModel.begin();
 			this.jenaModel.notifyEvent(GraphEvents.startRead);
+            boolean committed = false;
 			try {
 	 			log.trace("query:\n" + queryString);
  				log.trace("Executing query against dataset");
 				UpdateAction.execute(UpdateFactory.create(queryString), getDataset());
+				if (this.jenaModel.supportsTransactions()) {
+					this.jenaModel.commit();
+					committed = true;
+				}
+			} catch(Exception e){
+				log.error(e.getMessage(), e);
+				if (this.jenaModel.supportsTransactions() && !committed) {
+					this.jenaModel.abort();
+				}
 			} finally {
-				if (this.jenaModel.supportsTransactions()) this.jenaModel.commit();
 				this.jenaModel.notifyEvent(GraphEvents.finishRead);
 			}
 		} else {
