@@ -606,6 +606,7 @@ public abstract class JenaConnect {
 				if (this.jenaModel.supportsTransactions() && !committed) {
 					this.jenaModel.abort();
 				}
+				throw e;
 			} finally {
 				this.jenaModel.notifyEvent(GraphEvents.finishRead);
 			}
